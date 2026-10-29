@@ -1,1 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Habit Builder Game</title>
+  <style>
+    :root{
+      --bg:#f3f3f3;
+      --surface:#ffffff;
+      --line:#d8d8d8;
+      --text:#181818;
+      --muted:#686868;
+      --dark:#2a2a2a;
+      --mid:#8d8d8d;
+      --light:#ececec;
+      --accent:#111111;
+      --success:#222222;
+      --success-soft:#efefef;
+      --wrong:#8b8b8b;
+      --wrong-soft:#f1f1f1;
+      --shadow:0 12px 28px rgba(0,0,0,.06);
+    }
 
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,.8) 0, rgba(255,255,255,0) 18%),
+        radial-gradient(circle at 85% 15%, rgba(255,255,255,.7) 0, rgba(255,255,255,0) 17%),
+        linear-gradient(180deg,#f8f8f8 0%, #f0f0f0 100%);
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    .floating-bg{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+      z-index:0;
+    }
+    .floating-bg span{
+      position:absolute;
+      display:block;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:rgba(0,0,0,.04);
+      animation: floatUp linear infinite;
+    }
+    .floating-bg span:nth-child(1){left:8%; animation-duration:16s; animation-delay:0s; bottom:-20px;}
+    .floating-bg span:nth-child(2){left:20%; animation-duration:18s; animation-delay:3s; bottom:-30px; width:14px; height:14px;}
+    .floating-bg span:nth-child(3){left:32%; animation-duration:20s; animation-delay:1s; bottom:-25px;}
+    .floating-bg span:nth-child(4){left:44%; animation-duration:15s; animation-delay:2s; bottom:-18px; width:13px; height:13px;}
+    .floating-bg span:nth-child(5){left:57%; animation-duration:21s; animation-delay:4s; bottom:-26px;}
+    .floating-bg span:nth-child(6){left:69%; animation-duration:17s; animation-delay:1s; bottom:-24px; width:12px; height:12px;}
+    .floating-bg span:nth-child(7){left:78%; animation-duration:19s; animation-delay:2s; bottom:-20px;}
+    .floating-bg span:nth-child(8){left:88%; animation-duration:22s; animation-delay:5s; bottom:-28px; width:15px; height:15px;}
+
+    @keyframes floatUp{
+      0%{transform:translateY(0) translateX(0) scale(1); opacity:0}
+      10%{opacity:1}
+      90%{opacity:.25}
+      100%{transform:translateY(-110vh) translateX(20px) scale(1.3); opacity:0}
+    }
+
+    .container{
+      position:relative;
+      z-index:1;
+      width:min(96%, 980px);
+      margin:24px auto 42px;
+    }
+
+    header{
+      text-align:center;
+      margin-bottom:20px;
+    }
+    .badge{
+      display:inline-block;
+      background:var(--dark);
+      color:#fff;
+      padding:6px 14px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:1.5px;
+    }
+    h1{
+      margin:12px 0 6px;
+      font-size:clamp(30px,5vw,46px);
+      letter-spacing:-1.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .top-grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+      align-items:stretch;
+      margin-bottom:16px;
+    }
+
+    .panel{
+      background:var(--surface);
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+    }
+
+    .status-panel{
+      padding:18px;
+    }
+
+    .hud{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .hud-card{
+      background:#fafafa;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px 10px;
+      text-align:center;
+      min-height:82px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+    .hud-label{
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:1.3px;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .hud-value{
+      font-size:26px;
+      font-weight:800;
+      font-variant-numeric:tabular-nums;
+    }
+    .combo-value.combo-pop{
+      animation: comboPop .45s ease;
+    }
+    @keyframes comboPop{
+      0%{transform:scale(.85)}
+      45%{transform:scale(1.18)}
+      100%{transform:scale(1)}
+    }
+
+    .build-stage{
+      margin-top:2px;
+      font-size:13px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    .progress-wrap{
+      margin-top:14px;
+    }
+    .progress-top{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      margin-bottom:8px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .progress-track{
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      background:#e2e2e2;
+      overflow:hidden;
+      position:relative;
+      border:1px solid #dbdbdb;
+    }
+    .progress-fill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,#222,#555,#222);
+      transition:width .5s ease;
+      position:relative;
+    }
+    .progress-fill::after{
+      content:"";
+      position:absolute;
+      top:0;
+      right:0;
+      width:40px;
+      height:100%;
+      background:linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.45), rgba(255,255,255,0));
+      animation: shimmer 2.1s linear infinite;
+    }
+    @keyframes shimmer{
+      0%{transform:translateX(-35px)}
+      100%{transform:translateX(30px)}
+    }
+
+    .house-panel{
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      overflow:hidden;
+      position:relative;
+      min-height:310px;
+    }
+
+    .house-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .house-title h2{
+      margin:0;
+      font-size:20px;
+    }
+    .house-title small{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .house-scene{
+      position:relative;
+      background:linear-gradient(180deg,#fdfdfd 0%, #f7f7f7 45%, #efefef 45%, #ececec 100%);
+      border:1px solid var(--line);
+      border-radius:20px;
+      min-height:240px;
+      overflow:hidden;
+    }
+
+    .house-scene svg{
+      width:100%;
+      height:240px;
+      display:block;
+    }
+
+    .build-note{
+      margin-top:10px;
+      font-size:13px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    .sparkle-layer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+    .sparkle{
+      position:absolute;
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:rgba(0,0,0,.18);
+      animation:spark .8s ease forwards;
+    }
+    @keyframes spark{
+      0%{transform:translate(0,0) scale(.4); opacity:0}
+      25%{opacity:1}
+      100%{transform:translate(var(--dx), var(--dy)) scale(1.2); opacity:0}
+    }
+
+    .main-card{
+      padding:28px;
+      animation: fadeIn .35s ease;
+    }
+    @keyframes fadeIn{
+      from{opacity:0; transform:translateY(8px)}
+      to{opacity:1; transform:translateY(0)}
+    }
+
+    .level-tag{
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:1.7px;
+      text-transform:uppercase;
+    }
+
+    .main-card h2{
+      margin:8px 0 6px;
+      font-size:28px;
+      letter-spacing:-.5px;
+    }
+
+    .desc{
+      margin:0 0 22px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .story-box{
+      background:#fafafa;
+      border:1px solid var(--line);
+      border-left:5px solid #222;
+      border-radius:14px;
+      padding:18px 18px;
+      line-height:1.95;
+      font-size:15px;
+    }
+
+    mark{
+      background:#dfdfdf;
+      color:#111;
+      padding:2px 4px;
+      border-radius:5px;
+      font-weight:700;
+    }
+
+    .word-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:10px;
+      margin-top:18px;
+    }
+
+    .word-card{
+      border:1px solid var(--line);
+      background:#fcfcfc;
+      border-radius:14px;
+      padding:14px;
+    }
+
+    .word-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
+    .word-text{
+      font-weight:800;
+      font-size:15px;
+    }
+    .word-meaning{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .word-example{
+      margin-top:8px;
+      font-size:12px;
+      color:#555;
+    }
+
+    .speak-btn{
+      border:1px solid var(--line);
+      background:#fff;
+      color:#222;
+      border-radius:10px;
+      width:34px;
+      height:34px;
+      font-size:15px;
+      flex-shrink:0;
+      transition:transform .15s ease, background .15s ease;
+    }
+    .speak-btn:hover{
+      background:#f1f1f1;
+      transform:translateY(-1px);
+    }
+
+    .question-number{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:800;
+      margin-bottom:10px;
+    }
+    .question-text{
+      font-size:clamp(20px, 3.4vw, 28px);
+      font-weight:800;
+      line-height:1.45;
+      margin-bottom:18px;
+    }
+
+    .choice-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .choice{
+      text-align:left;
+      width:100%;
+      border:1.5px solid var(--line);
+      background:#fff;
+      border-radius:14px;
+      padding:14px 16px;
+      font-size:15px;
+      color:#222;
+      transition:all .16s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .choice:hover:not(:disabled){
+      background:#f7f7f7;
+      border-color:#888;
+      transform:translateY(-1px);
+    }
+
+    .choice::after{
+      content:"";
+      position:absolute;
+      inset:auto auto 0 0;
+      height:2px;
+      width:0;
+      background:#222;
+      transition:width .18s ease;
+    }
+    .choice:hover:not(:disabled)::after{
+      width:100%;
+    }
+
+    .choice.correct{
+      background:#222;
+      border-color:#222;
+      color:#fff;
+      animation: correctFlash .4s ease;
+    }
+    .choice.wrong{
+      background:#ededed;
+      color:#666;
+      border-color:#9f9f9f;
+      animation: wrongShake .3s ease;
+    }
+    @keyframes correctFlash{
+      0%{transform:scale(.98)}
+      40%{transform:scale(1.02)}
+      100%{transform:scale(1)}
+    }
+    @keyframes wrongShake{
+      0%{transform:translateX(0)}
+      25%{transform:translateX(-6px)}
+      50%{transform:translateX(6px)}
+      75%{transform:translateX(-3px)}
+      100%{transform:translateX(0)}
+    }
+
+    .feedback{
+      margin-top:18px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#f7f7f7;
+      padding:15px 16px;
+      animation:fadeIn .25s ease;
+    }
+    .feedback-title{
+      font-size:20px;
+      font-weight:800;
+    }
+    .feedback-detail{
+      margin-top:6px;
+      font-size:13px;
+      color:#555;
+      line-height:1.65;
+    }
+    .feedback.correct-theme{
+      background:#f9f9f9;
+      border-color:#cfcfcf;
+    }
+    .feedback.wrong-theme{
+      background:#f3f3f3;
+      border-color:#d7d7d7;
+    }
+
+    .combo-banner{
+      margin:10px 0 2px;
+      display:inline-block;
+      padding:7px 14px;
+      background:#222;
+      color:#fff;
+      border-radius:999px;
+      font-weight:900;
+      letter-spacing:.8px;
+      animation: comboBanner .45s ease;
+    }
+    @keyframes comboBanner{
+      0%{transform:scale(.5) rotate(-4deg); opacity:0}
+      60%{transform:scale(1.1) rotate(1deg); opacity:1}
+      100%{transform:scale(1) rotate(0)}
+    }
+
+    .actions{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+      gap:10px;
+      margin-top:22px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border:none;
+      border-radius:14px;
+      padding:12px 20px;
+      font-size:15px;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .14s ease, background .14s ease, opacity .14s ease;
+    }
+    .btn:hover:not(:disabled){
+      transform:translateY(-1px);
+    }
+    .btn-primary{
+      background:#222;
+      color:#fff;
+    }
+    .btn-primary:hover:not(:disabled){
+      background:#3a3a3a;
+    }
+    .btn-secondary{
+      background:#ececec;
+      color:#222;
+      border:1px solid #d8d8d8;
+    }
+
+    .summary-center{
+      text-align:center;
+      padding:8px 0;
+    }
+    .big-icon{
+      font-size:52px;
+      font-weight:900;
+    }
+    .big-score{
+      font-size:54px;
+      font-weight:900;
+      line-height:1;
+      margin:10px 0;
+      letter-spacing:-1px;
+    }
+
+    .stat-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-top:18px;
+    }
+    .stat-card{
+      background:#fafafa;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:15px 10px;
+      text-align:center;
+    }
+    .stat-card strong{
+      display:block;
+      font-size:24px;
+      margin-bottom:4px;
+    }
+    .stat-card span{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .writing-card{
+      background:#fbfbfb;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      margin-bottom:14px;
+    }
+    textarea{
+      width:100%;
+      min-height:96px;
+      resize:vertical;
+      border:1px solid #d1d1d1;
+      border-radius:12px;
+      padding:12px;
+      background:#fff;
+      color:#111;
+      font:inherit;
+      margin-top:10px;
+    }
+    .hint{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:8px;
+      line-height:1.6;
+    }
+    .writing-feedback{
+      background:#f3f3f3;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px;
+      margin-top:12px;
+      font-size:13px;
+      color:#444;
+    }
+
+    .footer-note{
+      text-align:center;
+      color:#888;
+      font-size:12px;
+      margin-top:12px;
+    }
+
+    .hidden{display:none !important;}
+
+    .house-part{
+      opacity:0;
+      transform:translateY(10px) scale(.98);
+      transition:opacity .55s ease, transform .55s ease;
+    }
+    .house-part.show{
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
+
+    .smoke puff{
+      opacity:0;
+    }
+
+    .smoke1, .smoke2, .smoke3{
+      opacity:0;
+    }
+    .smoke1.show, .smoke2.show, .smoke3.show{
+      opacity:.65;
+      animation:smokeUp 3s ease-in-out infinite;
+      transform-origin:center;
+    }
+    .smoke2.show{animation-delay:.9s}
+    .smoke3.show{animation-delay:1.7s}
+
+    @keyframes smokeUp{
+      0%{transform:translateY(0) scale(.8); opacity:0}
+      20%{opacity:.35}
+      70%{opacity:.18}
+      100%{transform:translateY(-16px) scale(1.22); opacity:0}
+    }
+
+    .twinkle{
+      opacity:0;
+    }
+    .twinkle.show{
+      opacity:.8;
+      animation:twinkle 1.7s ease-in-out infinite;
+    }
+    .twinkle.delay1{animation-delay:.3s}
+    .twinkle.delay2{animation-delay:.8s}
+    .twinkle.delay3{animation-delay:1.2s}
+    @keyframes twinkle{
+      0%,100%{transform:scale(.7); opacity:.2}
+      50%{transform:scale(1.15); opacity:.9}
+    }
+
+    @media (max-width: 840px){
+      .top-grid{
+        grid-template-columns:1fr;
+      }
+    }
+    @media (max-width: 640px){
+      .hud{grid-template-columns:1fr 1fr 1fr}
+      .word-grid{grid-template-columns:1fr}
+      .stat-grid{grid-template-columns:1fr 1fr}
+      .main-card{padding:22px}
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-bg" aria-hidden="true">
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="badge">GAME-BASED ENGLISH ACTIVITY</div>
+      <h1>STUDY HABIT BUILDER</h1>
+      <p class="subtitle">Learn expressions, earn points, and build a house step by step.</p>
+    </header>
+
+    <div class="top-grid">
+      <section class="panel status-panel" aria-label="Game status">
+        <div class="hud">
+          <div class="hud-card">
+            <div class="hud-label">Score</div>
+            <div class="hud-value" id="scoreValue">0</div>
+          </div>
+          <div class="hud-card">
+            <div class="hud-label">Combo</div>
+            <div class="hud-value combo-value" id="comboValue">0</div>
+          </div>
+          <div class="hud-card">
+            <div class="hud-label">Questions</div>
+            <div class="hud-value" id="questionProgress">0/18</div>
+          </div>
+        </div>
+
+        <div class="build-stage" id="buildStageText">Current build stage: Empty lot</div>
+
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span>House Progress</span>
+            <span id="progressPercentText">0%</span>
+          </div>
+          <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel house-panel" aria-label="House building visualization">
+        <div class="house-title">
+          <h2>Your House</h2>
+          <small id="houseStageMini">Stage 0 / 9</small>
+        </div>
+
+        <div class="house-scene">
+          <svg viewBox="0 0 500 250" aria-hidden="true">
+            <!-- sky -->
+            <circle cx="70" cy="55" r="22" fill="#dddddd" />
+            <circle cx="92" cy="55" r="18" fill="#e7e7e7" />
+            <circle cx="82" cy="45" r="16" fill="#f0f0f0" />
+
+            <circle cx="400" cy="45" r="18" fill="#e3e3e3" />
+            <circle cx="420" cy="45" r="14" fill="#efefef" />
+            <circle cx="410" cy="36" r="12" fill="#f7f7f7" />
+
+            <!-- ground -->
+            <rect x="0" y="178" width="500" height="72" fill="#e2e2e2"></rect>
+            <rect x="0" y="185" width="500" height="65" fill="#dedede"></rect>
+
+            <!-- path -->
+            <g id="part9" class="house-part">
+              <path d="M240 250 L220 178 L280 178 L260 250 Z" fill="#c9c9c9"></path>
+              <path d="M248 250 L235 178 L265 178 L252 250 Z" fill="#b8b8b8" opacity=".65"></path>
+            </g>
+
+            <!-- foundation -->
+            <g id="part1" class="house-part">
+              <rect x="145" y="165" width="210" height="18" rx="3" fill="#969696"></rect>
+            </g>
+
+            <!-- floor/base -->
+            <g id="part2" class="house-part">
+              <rect x="160" y="145" width="180" height="22" fill="#b7b7b7"></rect>
+            </g>
+
+            <!-- walls -->
+            <g id="part3" class="house-part">
+              <rect x="165" y="95" width="170" height="70" fill="#f3f3f3" stroke="#a7a7a7" stroke-width="2"></rect>
+              <line x1="165" y1="120" x2="335" y2="120" stroke="#d2d2d2" stroke-width="2"></line>
+              <line x1="250" y1="95" x2="250" y2="165" stroke="#d2d2d2" stroke-width="2"></line>
+            </g>
+
+            <!-- roof -->
+            <g id="part4" class="house-part">
+              <polygon points="150,98 250,42 350,98" fill="#666666"></polygon>
+              <polygon points="165,95 250,52 335,95" fill="#7a7a7a"></polygon>
+            </g>
+
+            <!-- door -->
+            <g id="part5" class="house-part">
+              <rect x="234" y="128" width="32" height="37" rx="2" fill="#8b8b8b"></rect>
+              <circle cx="259" cy="146" r="2.2" fill="#efefef"></circle>
+            </g>
+
+            <!-- left window -->
+            <g id="part6" class="house-part">
+              <rect x="185" y="112" width="36" height="28" fill="#d8d8d8" stroke="#9f9f9f" stroke-width="2"></rect>
+              <line x1="203" y1="112" x2="203" y2="140" stroke="#9f9f9f" stroke-width="2"></line>
+              <line x1="185" y1="126" x2="221" y2="126" stroke="#9f9f9f" stroke-width="2"></line>
+            </g>
+
+            <!-- right window -->
+            <g id="part7" class="house-part">
+              <rect x="279" y="112" width="36" height="28" fill="#d8d8d8" stroke="#9f9f9f" stroke-width="2"></rect>
+              <line x1="297" y1="112" x2="297" y2="140" stroke="#9f9f9f" stroke-width="2"></line>
+              <line x1="279" y1="126" x2="315" y2="126" stroke="#9f9f9f" stroke-width="2"></line>
+            </g>
+
+            <!-- chimney -->
+            <g id="part8" class="house-part">
+              <rect x="298" y="62" width="18" height="26" fill="#8b8b8b"></rect>
+            </g>
+
+            <!-- tree -->
+            <g id="part10" class="house-part">
+              <rect x="105" y="138" width="10" height="28" fill="#7f7f7f"></rect>
+              <circle cx="110" cy="124" r="18" fill="#bcbcbc"></circle>
+              <circle cx="95" cy="128" r="13" fill="#c6c6c6"></circle>
+              <circle cx="124" cy="130" r="14" fill="#d0d0d0"></circle>
+            </g>
+
+            <!-- smoke -->
+            <g>
+              <circle id="smoke1" class="smoke1" cx="307" cy="55" r="7" fill="#d7d7d7"></circle>
+              <circle id="smoke2" class="smoke2" cx="316" cy="43" r="8" fill="#e0e0e0"></circle>
+              <circle id="smoke3" class="smoke3" cx="304" cy="35" r="6" fill="#ececec"></circle>
+            </g>
+
+            <!-- sparkles -->
+            <g>
+              <circle id="tw1" class="twinkle" cx="355" cy="75" r="3.2" fill="#9c9c9c"></circle>
+              <circle id="tw2" class="twinkle delay1" cx="145" cy="78" r="2.8" fill="#8d8d8d"></circle>
+              <circle id="tw3" class="twinkle delay2" cx="365" cy="115" r="2.8" fill="#a8a8a8"></circle>
+              <circle id="tw4" class="twinkle delay3" cx="140" cy="122" r="3" fill="#999"></circle>
+            </g>
+          </svg>
+
+          <div class="sparkle-layer" id="sparkleLayer"></div>
+        </div>
+        <div class="build-note" id="buildNote">Answer correctly to add new parts to the house.</div>
+      </section>
+    </div>
+
+    <main class="panel main-card" id="app" aria-live="polite"></main>
+    <div class="footer-note">Suitable for Grade 8 Korean EFL learners · A2–B1 · Approximately 10 minutes</div>
+  </div>
+
+  <script>
+    "use strict";
+
+    const EXPRESSIONS = [
+      {
+        id: "track",
+        text: "keep track of",
+        meaning: "기록하고 파악하다",
+        example: "I keep track of my study time.",
+        explanation: "record or monitor something"
+      },
+      {
+        id: "break",
+        text: "take a break",
+        meaning: "휴식을 취하다",
+        example: "I take a break after one hour.",
+        explanation: "rest for a short time"
+      },
+      {
+        id: "away",
+        text: "stay away from",
+        meaning: "멀리하다, 피하다",
+        example: "Stay away from your phone while studying.",
+        explanation: "avoid something"
+      },
+      {
+        id: "sleep",
+        text: "get enough sleep",
+        meaning: "충분한 수면을 취하다",
+        example: "Students should get enough sleep.",
+        explanation: "sleep for a sufficient amount of time"
+      },
+      {
+        id: "deal",
+        text: "deal with",
+        meaning: "대처하다, 처리하다",
+        example: "She deals with stress by walking.",
+        explanation: "manage a problem or difficult situation"
+      },
+      {
+        id: "stick",
+        text: "stick to",
+        meaning: "계속 지키다, 고수하다",
+        example: "I stick to my study plan.",
+        explanation: "continue following a plan or routine"
+      }
+    ];
+
+    const LEVELS = [
+      {
+        name: "Meaning Match",
+        title: "Level 1: Match the Meaning",
+        description: "Choose the expression that best matches the meaning.",
+        questions: [
+          {
+            q: "Which expression means 'to record or monitor information'?",
+            options: ["keep track of", "stick to", "deal with", "take a break"],
+            answer: "keep track of",
+            hint: "You can do this with your study time every day."
+          },
+          {
+            q: "Which expression means 'to rest for a short time'?",
+            options: ["get enough sleep", "take a break", "stay away from", "stick to"],
+            answer: "take a break",
+            hint: "You do this after studying too long."
+          },
+          {
+            q: "Which expression means 'to avoid something'?",
+            options: ["deal with", "keep track of", "stay away from", "stick to"],
+            answer: "stay away from",
+            hint: "You might do this with your phone during study time."
+          },
+          {
+            q: "Which expression means 'to sleep sufficiently'?",
+            options: ["take a break", "get enough sleep", "stick to", "deal with"],
+            answer: "get enough sleep",
+            hint: "This is important before exams."
+          },
+          {
+            q: "Which expression means 'to manage a problem'?",
+            options: ["stick to", "stay away from", "deal with", "keep track of"],
+            answer: "deal with",
+            hint: "You can do this with stress."
+          },
+          {
+            q: "Which expression means 'to continue following a plan'?",
+            options: ["take a break", "deal with", "get enough sleep", "stick to"],
+            answer: "stick to",
+            hint: "You do this with a new routine."
+          }
+        ]
+      },
+      {
+        name: "Complete the Sentence",
+        title: "Level 2: Fill the Gap",
+        description: "Choose the expression that best completes each sentence.",
+        questions: [
+          {
+            q: "I use a notebook to ______ my homework and study time.",
+            options: ["deal with", "keep track of", "get enough sleep", "take a break"],
+            answer: "keep track of",
+            hint: "The notebook helps you monitor your work."
+          },
+          {
+            q: "After studying for one hour, I usually ______.",
+            options: ["stick to", "stay away from", "take a break", "deal with"],
+            answer: "take a break",
+            hint: "A short rest is healthy."
+          },
+          {
+            q: "I try to ______ social media during exam week.",
+            options: ["stay away from", "stick to", "keep track of", "deal with"],
+            answer: "stay away from",
+            hint: "This expression means avoid."
+          },
+          {
+            q: "I go to bed early because I want to ______.",
+            options: ["take a break", "deal with", "get enough sleep", "stick to"],
+            answer: "get enough sleep",
+            hint: "This is about healthy sleeping habits."
+          },
+          {
+            q: "Listening to music helps me ______ stress.",
+            options: ["keep track of", "deal with", "stay away from", "stick to"],
+            answer: "deal with",
+            hint: "The meaning is 'manage'."
+          },
+          {
+            q: "My goal is to ______ my study schedule every week.",
+            options: ["stick to", "take a break", "get enough sleep", "stay away from"],
+            answer: "stick to",
+            hint: "You want to continue following the schedule."
+          }
+        ]
+      },
+      {
+        name: "Real-Life Challenge",
+        title: "Level 3: Choose the Best Advice",
+        description: "Read the situation and choose the best answer.",
+        questions: [
+          {
+            q: "You often forget how long you studied. What should you do?",
+            options: [
+              "Keep track of your study time.",
+              "Stay away from your study time.",
+              "Take a break from your study time.",
+              "Stick to your stress."
+            ],
+            answer: "Keep track of your study time.",
+            hint: "You need to record the information."
+          },
+          {
+            q: "You have studied for two hours and feel tired. What should you do?",
+            options: [
+              "Take a break.",
+              "Stick to your tiredness.",
+              "Stay away from sleep.",
+              "Keep track of your chair."
+            ],
+            answer: "Take a break.",
+            hint: "A short rest helps your concentration."
+          },
+          {
+            q: "Your phone keeps distracting you during study time. What is the best advice?",
+            options: [
+              "Deal with your phone every minute.",
+              "Stay away from your phone.",
+              "Keep track of every notification.",
+              "Stick to your phone."
+            ],
+            answer: "Stay away from your phone.",
+            hint: "You should avoid the distraction."
+          },
+          {
+            q: "Your friend stays up late every night and feels tired at school. What should you say?",
+            options: [
+              "You should get enough sleep.",
+              "You should stay away from your bed.",
+              "You should deal with your pillow.",
+              "You should keep track of your dreams."
+            ],
+            answer: "You should get enough sleep.",
+            hint: "This expression is about sleeping enough."
+          },
+          {
+            q: "You feel stressed before a big exam. What can you do?",
+            options: [
+              "Deal with stress by taking a short walk.",
+              "Stay away from all homework forever.",
+              "Stick to your stress.",
+              "Take a break from every class all week."
+            ],
+            answer: "Deal with stress by taking a short walk.",
+            hint: "This means manage the problem in a healthy way."
+          },
+          {
+            q: "You made a good study routine and want to continue following it. Which expression fits?",
+            options: [
+              "keep track of",
+              "deal with",
+              "stick to",
+              "take a break"
+            ],
+            answer: "stick to",
+            hint: "This expression means continue following a plan."
+          }
+        ]
+      }
+    ];
+
+    const app = document.getElementById("app");
+    const scoreValueEl = document.getElementById("scoreValue");
+    const comboValueEl = document.getElementById("comboValue");
+    const questionProgressEl = document.getElementById("questionProgress");
+    const progressFillEl = document.getElementById("progressFill");
+    const progressPercentTextEl = document.getElementById("progressPercentText");
+    const buildStageTextEl = document.getElementById("buildStageText");
+    const houseStageMiniEl = document.getElementById("houseStageMini");
+    const buildNoteEl = document.getElementById("buildNote");
+    const sparkleLayer = document.getElementById("sparkleLayer");
+
+    const TOTAL_QUESTIONS = LEVELS.reduce((sum, level) => sum + level.questions.length, 0);
+    const MAX_SCORE = TOTAL_QUESTIONS * 100; // 1800
+
+    let levelIndex = 0;
+    let questionIndex = 0;
+    let score = 0;
+    let combo = 0;
+    let bestCombo = 0;
+    let firstTryCorrect = 0;
+    let answeredCount = 0;
+    let questionHadError = false;
+    let locked = false;
+    let gameFinished = false;
+    let writingAnswers = ["", ""];
+
+    const HOUSE_STAGES = [
+      { threshold: 0, label: "Empty lot" },
+      { threshold: 100, label: "Foundation added" },
+      { threshold: 300, label: "Base floor added" },
+      { threshold: 500, label: "Walls raised" },
+      { threshold: 700, label: "Roof completed" },
+      { threshold: 900, label: "Door installed" },
+      { threshold: 1100, label: "Left window installed" },
+      { threshold: 1300, label: "Right window installed" },
+      { threshold: 1500, label: "Chimney added" },
+      { threshold: 1700, label: "Path completed" },
+      { threshold: 1800, label: "Tree and final shine added" }
+    ];
+
+    function escapeHTML(str){
+      return String(str).replace(/[&<>"']/g, ch => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+      })[ch]);
+    }
+
+    function getCurrentLevel(){
+      let idx = 0;
+      for(let i=0;i<HOUSE_STAGES.length;i++){
+        if(score >= HOUSE_STAGES[i].threshold){
+          idx = i;
+        }
+      }
+      return idx;
+    }
+
+    function updateHouse(){
+      const level = getCurrentLevel();
+
+      const visibilityMap = [
+        [],                 // 0
+        ["part1"],          // 1
+        ["part1","part2"],  // 2
+        ["part1","part2","part3"], // 3
+        ["part1","part2","part3","part4"], // 4
+        ["part1","part2","part3","part4","part5"], // 5
+        ["part1","part2","part3","part4","part5","part6"], // 6
+        ["part1","part2","part3","part4","part5","part6","part7"], // 7
+        ["part1","part2","part3","part4","part5","part6","part7","part8"], // 8
+        ["part1","part2","part3","part4","part5","part6","part7","part8","part9"], // 9
+        ["part1","part2","part3","part4","part5","part6","part7","part8","part9","part10"] // 10
+      ];
+
+      const allParts = ["part1","part2","part3","part4","part5","part6","part7","part8","part9","part10"];
+      allParts.forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(visibilityMap[level].includes(id)) el.classList.add("show");
+        else el.classList.remove("show");
+      });
+
+      const smokeIds = ["smoke1","smoke2","smoke3"];
+      smokeIds.forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(level >= 8) el.classList.add("show");
+        else el.classList.remove("show");
+      });
+
+      const twinkles = ["tw1","tw2","tw3","tw4"];
+      twinkles.forEach(id=>{
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(level >= 10) el.classList.add("show");
+        else el.classList.remove("show");
+      });
+
+      buildStageTextEl.textContent = "Current build stage: " + HOUSE_STAGES[level].label;
+      houseStageMiniEl.textContent = `Stage ${level} / 10`;
+      buildNoteEl.textContent = level >= 10
+        ? "Amazing! Your study habit house is fully built."
+        : "Answer correctly to unlock the next house part.";
+    }
+
+    function updateHUD(animateCombo = false){
+      scoreValueEl.textContent = score.toLocaleString();
+      comboValueEl.textContent = combo;
+      questionProgressEl.textContent = `${answeredCount}/${TOTAL_QUESTIONS}`;
+
+      const percent = Math.round((score / MAX_SCORE) * 100);
+      progressFillEl.style.width = percent + "%";
+      progressPercentTextEl.textContent = percent + "%";
+      document.getElementById("progressBar").setAttribute("aria-valuenow", String(percent));
+
+      if(animateCombo){
+        comboValueEl.classList.remove("combo-pop");
+        void comboValueEl.offsetWidth;
+        comboValueEl.classList.add("combo-pop");
+      }
+
+      updateHouse();
+    }
+
+    function setScreen(html){
+      app.innerHTML = html;
+    }
+
+    function speak(text){
+      if(!("speechSynthesis" in window)){
+        alert("Speech is not supported in this browser.");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.lang && v.lang.toLowerCase() === "en-us");
+      if(preferred) utterance.voice = preferred;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function createSparkles(count = 14){
+      for(let i=0;i<count;i++){
+        const s = document.createElement("span");
+        s.className = "sparkle";
+        s.style.left = (44 + Math.random()*12) + "%";
+        s.style.top = (42 + Math.random()*18) + "%";
+        s.style.setProperty("--dx", `${(Math.random()*120-60)}px`);
+        s.style.setProperty("--dy", `${(Math.random()*100-50)}px`);
+        s.style.animationDelay = `${Math.random()*0.08}s`;
+        sparkleLayer.appendChild(s);
+        setTimeout(()=>s.remove(), 900);
+      }
+    }
+
+    function getQuestionLabel(){
+      return `Question ${answeredCount + 1} of ${TOTAL_QUESTIONS}`;
+    }
+
+    function showWelcome(){
+      setScreen(`
+        <div class="level-tag">Mission Briefing</div>
+        <h2>Build Better Study Habits</h2>
+        <p class="desc">
+          Read Jisoo's story, learn the six target expressions, and answer the game questions.
+          Every first-try correct answer gives you <strong>100 points</strong> and helps build your house.
+        </p>
+
+        <div class="story-box">
+          Jisoo wanted to improve her study habits before the exam period.
+          She began to <mark>keep track of</mark> how long she studied each day.
+          She also learned when to <mark>take a break</mark> instead of studying for too long.
+          While studying, she tried to <mark>stay away from</mark> her phone and made sure to
+          <mark>get enough sleep</mark>.
+          When she felt stressed, she learned how to <mark>deal with</mark> it by taking a short walk.
+          After several weeks, she found it easier to <mark>stick to</mark> her new routine.
+        </div>
+
+        <h3 style="margin:22px 0 12px;">Target Expressions</h3>
+        <div class="word-grid">
+          ${EXPRESSIONS.map(item=>`
+            <div class="word-card">
+              <div class="word-top">
+                <div class="word-text">${escapeHTML(item.text)}</div>
+                <button class="speak-btn" data-speak="${escapeHTML(item.text)}" aria-label="Hear ${escapeHTML(item.text)}">▶</button>
+              </div>
+              <div class="word-meaning">${escapeHTML(item.meaning)}</div>
+              <div class="word-example">${escapeHTML(item.example)}</div>
+            </div>
+          `).join("")}
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="startBtn">Start the Game →</button>
+        </div>
+      `);
+
+      document.querySelectorAll("[data-speak]").forEach(btn=>{
+        btn.addEventListener("click", ()=>speak(btn.dataset.speak));
+      });
+
+      document.getElementById("startBtn").addEventListener("click", showQuestion);
+    }
+
+    function showQuestion(){
+      if(gameFinished) return;
+      locked = false;
+      questionHadError = false;
+
+      const level = LEVELS[levelIndex];
+      const q = level.questions[questionIndex];
+
+      setScreen(`
+        <div class="level-tag">${escapeHTML(level.name)} · Level ${levelIndex + 1} / 3</div>
+        <h2>${escapeHTML(level.title)}</h2>
+        <p class="desc">${escapeHTML(level.description)}</p>
+
+        <div class="question-number">${getQuestionLabel()}</div>
+        <div class="question-text">${escapeHTML(q.q)}</div>
+
+        <div class="choice-list" id="choiceList">
+          ${q.options.map((opt, idx)=>`
+            <button class="choice" data-index="${idx}">
+              <strong>${String.fromCharCode(65 + idx)}.</strong> ${escapeHTML(opt)}
+            </button>
+          `).join("")}
+        </div>
+
+        <div id="feedbackArea" aria-live="polite"></div>
+
+        <div class="actions">
+          <button class="btn btn-primary hidden" id="nextBtn">Continue →</button>
+        </div>
+      `);
+
+      document.querySelectorAll(".choice").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const picked = q.options[Number(btn.dataset.index)];
+          checkAnswer(picked, btn);
+        });
+      });
+
+      document.getElementById("nextBtn").addEventListener("click", nextQuestion);
+    }
+
+    function checkAnswer(answer, selectedBtn){
+      if(locked || gameFinished) return;
+
+      const level = LEVELS[levelIndex];
+      const q = level.questions[questionIndex];
+      const feedbackArea = document.getElementById("feedbackArea");
+
+      if(answer === q.answer){
+        locked = true;
+
+        selectedBtn.classList.add("correct");
+        document.querySelectorAll(".choice").forEach(btn=>btn.disabled = true);
+
+        answeredCount++;
+
+        let feedbackTitle = "";
+        let comboBanner = "";
+        let feedbackDetail = "";
+
+        if(!questionHadError){
+          score += 100;
+          firstTryCorrect++;
+          combo++;
+          bestCombo = Math.max(bestCombo, combo);
+
+          const praise = ["Great job!", "Excellent!", "Amazing!", "Well done!", "Awesome!"];
+          feedbackTitle = praise[Math.floor(Math.random() * praise.length)];
+          feedbackDetail = `You earned <strong>100 points</strong>.`;
+          createSparkles(18);
+
+          if(combo >= 2){
+            comboBanner = `<div class="combo-banner">${combo} Combo!</div>`;
+          }
+        } else {
+          combo = 0;
+          feedbackTitle = "Nice recovery!";
+          feedbackDetail = `You found the correct answer after trying again. Keep going!`;
+          createSparkles(10);
+        }
+
+        feedbackArea.innerHTML = `
+          <div class="feedback correct-theme">
+            <div class="feedback-title">${feedbackTitle}</div>
+            ${comboBanner}
+            <div class="feedback-detail">
+              ${feedbackDetail}<br>
+              Correct answer: <strong>${escapeHTML(q.answer)}</strong>
+            </div>
+          </div>
+        `;
+
+        updateHUD(true);
+        document.getElementById("nextBtn").classList.remove("hidden");
+      } else {
+        questionHadError = true;
+        combo = 0;
+        selectedBtn.classList.add("wrong");
+        selectedBtn.disabled = true;
+
+        feedbackArea.innerHTML = `
+          <div class="feedback wrong-theme">
+            <div class="feedback-title">Try again...</div>
+            <div class="feedback-detail">
+              Hint: ${escapeHTML(q.hint)}<br>
+              You can do it. Choose another answer.
+            </div>
+          </div>
+        `;
+
+        updateHUD();
+
+        const remainingChoices = [...document.querySelectorAll(".choice")].filter(btn=>!btn.disabled);
+        if(remainingChoices.length === 1){
+          remainingChoices[0].click();
+        }
+      }
+    }
+
+    function nextQuestion(){
+      if(!locked || gameFinished) return;
+
+      questionIndex++;
+
+      if(questionIndex < LEVELS[levelIndex].questions.length){
+        showQuestion();
+        return;
+      }
+
+      showLevelComplete();
+    }
+
+    function showLevelComplete(){
+      const doneLevel = levelIndex + 1;
+      const messages = [
+        "You learned the meanings. Now use them in sentences.",
+        "Great work! Now use the expressions in real-life situations.",
+        "You cleared all quiz levels. Time for your final mission!"
+      ];
+
+      setScreen(`
+        <div class="summary-center">
+          <div class="big-icon">★</div>
+          <div class="level-tag">Level Complete</div>
+          <h2>Level ${doneLevel} Cleared!</h2>
+          <div class="big-score">${score.toLocaleString()}</div>
+          <p class="desc" style="margin-bottom:16px;">${messages[doneLevel - 1]}</p>
+          <button class="btn btn-primary" id="continueBtn">${doneLevel < 3 ? "Next Level →" : "Final Mission →"}</button>
+        </div>
+      `);
+
+      document.getElementById("continueBtn").addEventListener("click", ()=>{
+        if(doneLevel < 3){
+          levelIndex++;
+          questionIndex = 0;
+          showQuestion();
+        } else {
+          showWritingMission();
+        }
+      });
+    }
+
+    function showWritingMission(){
+      setScreen(`
+        <div class="level-tag">Final Mission</div>
+        <h2>Make It Personal</h2>
+        <p class="desc">
+          Write two short sentences about your own study habits.
+          Use at least one target expression in each sentence.
+        </p>
+
+        <div class="writing-card">
+          <strong>Mission 1</strong>
+          <div style="margin-top:6px;">How do you study well or manage distractions?</div>
+          <textarea id="writing1" placeholder="Example: I keep track of my homework in a notebook."></textarea>
+        </div>
+
+        <div class="writing-card">
+          <strong>Mission 2</strong>
+          <div style="margin-top:6px;">How do you stay healthy or manage stress while studying?</div>
+          <textarea id="writing2" placeholder="Example: I deal with stress by taking a short walk."></textarea>
+        </div>
+
+        <div class="hint">
+          Expressions: keep track of · take a break · stay away from · get enough sleep · deal with · stick to
+        </div>
+
+        <div id="writingFeedback"></div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="finishBtn">Finish Game →</button>
+        </div>
+      `);
+
+      document.getElementById("writing1").value = writingAnswers[0];
+      document.getElementById("writing2").value = writingAnswers[1];
+
+      document.getElementById("finishBtn").addEventListener("click", evaluateWriting);
+    }
+
+    function evaluateWriting(){
+      const a = document.getElementById("writing1").value.trim();
+      const b = document.getElementById("writing2").value.trim();
+
+      writingAnswers = [a, b];
+
+      if(!a || !b){
+        document.getElementById("writingFeedback").innerHTML = `
+          <div class="writing-feedback">Try again... Please write both sentences before finishing.</div>
+        `;
+        return;
+      }
+
+      const includesExpression = txt => EXPRESSIONS.some(e => txt.toLowerCase().includes(e.text));
+      if(!includesExpression(a) || !includesExpression(b)){
+        document.getElementById("writingFeedback").innerHTML = `
+          <div class="writing-feedback">Try again... Each sentence must include at least one target expression.</div>
+        `;
+        return;
+      }
+
+      finishGame();
+    }
+
+    function getRank(){
+      if(score === MAX_SCORE) return "Study Habit Master";
+      if(score >= 1400) return "Routine Builder";
+      if(score >= 900) return "Smart Learner";
+      return "Habit Explorer";
+    }
+
+    function finishGame(){
+      gameFinished = true;
+      createSparkles(30);
+
+      const accuracy = answeredCount ? Math.round((firstTryCorrect / answeredCount) * 100) : 0;
+      const buildPercent = Math.round((score / MAX_SCORE) * 100);
+
+      setScreen(`
+        <div class="summary-center">
+          <div class="big-icon">🏠</div>
+          <div class="level-tag">Mission Complete</div>
+          <h2>Your Study Habit House</h2>
+          <div class="big-score">${score.toLocaleString()}</div>
+          <p class="desc" style="margin-bottom:8px;">
+            Rank: <strong>${getRank()}</strong>
+          </p>
+
+          <div class="stat-grid">
+            <div class="stat-card">
+              <strong>${accuracy}%</strong>
+              <span>First-Try Accuracy</span>
+            </div>
+            <div class="stat-card">
+              <strong>${bestCombo}</strong>
+              <span>Best Combo</span>
+            </div>
+            <div class="stat-card">
+              <strong>${answeredCount}/${TOTAL_QUESTIONS}</strong>
+              <span>Questions Cleared</span>
+            </div>
+            <div class="stat-card">
+              <strong>${buildPercent}%</strong>
+              <span>House Built</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="margin:24px 0 12px;">Your Target Expressions</h3>
+        <div class="word-grid">
+          ${EXPRESSIONS.map(item=>`
+            <div class="word-card">
+              <div class="word-top">
+                <div class="word-text">${escapeHTML(item.text)}</div>
+                <button class="speak-btn" data-speak="${escapeHTML(item.text)}" aria-label="Hear ${escapeHTML(item.text)}">▶</button>
+              </div>
+              <div class="word-meaning">${escapeHTML(item.meaning)}</div>
+              <div class="word-example">${escapeHTML(item.example)}</div>
+            </div>
+          `).join("")}
+        </div>
+
+        ${writingAnswers.some(Boolean) ? `
+          <h3 style="margin:24px 0 10px;">Your Sentences</h3>
+          ${writingAnswers.filter(Boolean).map(text=>`
+            <div class="writing-feedback">${escapeHTML(text)}</div>
+          `).join("")}
+          <div class="hint">These sentences are self-checked for target expressions, but the teacher should still review grammar and meaning.</div>
+        ` : ""}
+
+        <div class="actions">
+          <button class="btn btn-secondary" id="restartBtn">Play Again ↻</button>
+        </div>
+      `);
+
+      document.querySelectorAll("[data-speak]").forEach(btn=>{
+        btn.addEventListener("click", ()=>speak(btn.dataset.speak));
+      });
+
+      document.getElementById("restartBtn").addEventListener("click", restartGame);
+    }
+
+    function restartGame(){
+      levelIndex = 0;
+      questionIndex = 0;
+      score = 0;
+      combo = 0;
+      bestCombo = 0;
+      firstTryCorrect = 0;
+      answeredCount = 0;
+      questionHadError = false;
+      locked = false;
+      gameFinished = false;
+      writingAnswers = ["", ""];
+      updateHUD();
+      showWelcome();
+    }
+
+    updateHUD();
+    showWelcome();
+  </script>
+</body>
+</html>
